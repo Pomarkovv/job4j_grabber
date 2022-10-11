@@ -48,6 +48,7 @@ public class AlertRabbit {
         }
     }
 
+
     public static class Rabbit implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
