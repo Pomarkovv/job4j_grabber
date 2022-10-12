@@ -20,6 +20,7 @@ public class AlertRabbit {
                 getProp().getProperty("url"),
                 getProp().getProperty("username"),
                 getProp().getProperty("password")
+
         )) {
             Class.forName(getProp().getProperty("driver-class-name"));
             try {
@@ -45,6 +46,7 @@ public class AlertRabbit {
             }
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
+
         }
     }
 
