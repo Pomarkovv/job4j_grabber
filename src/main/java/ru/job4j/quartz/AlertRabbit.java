@@ -15,14 +15,14 @@ import static org.quartz.TriggerBuilder.*;
 import static org.quartz.SimpleScheduleBuilder.*;
 
 public class AlertRabbit {
-    public static void main(String[] args) {
-        String url = getProp().getProperty("url");
-        String username = getProp().getProperty("username");
-        String password = getProp().getProperty("password");
+    public static void main(String[] args) throws ClassNotFoundException {
+        Properties properties = getProp();
+        Class.forName(getProp().getProperty("driver-class-name"));
         try (Connection cn = DriverManager.getConnection(
-                url, username, password
+                properties.getProperty("url"),
+                properties.getProperty("username"),
+                properties.getProperty("password")
         )) {
-            Class.forName(getProp().getProperty("driver-class-name"));
             try {
                 Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
                 scheduler.start();
@@ -44,7 +44,7 @@ public class AlertRabbit {
             } catch (SchedulerException | InterruptedException se) {
                 se.printStackTrace();
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
 
         }
