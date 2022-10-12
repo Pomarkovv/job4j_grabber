@@ -48,7 +48,6 @@ public class AlertRabbit {
         }
     }
 
-
     public static class Rabbit implements Job {
         @Override
         public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -66,7 +65,7 @@ public class AlertRabbit {
 
     public static Properties getProp() {
         Properties properties = new Properties();
-        try(InputStream in = FileInputStream.class.getClassLoader().getResourceAsStream("./src/main/resources/rabbit.properties")) {
+        try (InputStream in = AlertRabbit.class.getClassLoader().getResourceAsStream("rabbit.properties")) {
             properties.load(in);
         } catch (IOException e) {
             e.printStackTrace();
