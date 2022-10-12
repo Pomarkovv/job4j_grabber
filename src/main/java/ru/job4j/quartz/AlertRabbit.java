@@ -16,11 +16,11 @@ import static org.quartz.SimpleScheduleBuilder.*;
 
 public class AlertRabbit {
     public static void main(String[] args) {
+        String url = getProp().getProperty("url");
+        String username = getProp().getProperty("username");
+        String password = getProp().getProperty("password");
         try (Connection cn = DriverManager.getConnection(
-                getProp().getProperty("url"),
-                getProp().getProperty("username"),
-                getProp().getProperty("password")
-
+                url, username, password
         )) {
             Class.forName(getProp().getProperty("driver-class-name"));
             try {
@@ -44,7 +44,7 @@ public class AlertRabbit {
             } catch (SchedulerException | InterruptedException se) {
                 se.printStackTrace();
             }
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
 
         }
