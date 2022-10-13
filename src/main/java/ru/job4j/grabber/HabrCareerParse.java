@@ -5,16 +5,24 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import ru.job4j.grabber.utils.DateTimeParser;
 import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HabrCareerParse {
+public class HabrCareerParse implements Parse {
 
     private static final String SOURCE_LINK = "https://career.habr.com";
-    private static final String PAGE_LINK = String.format("%s/vacancies/java_developer", SOURCE_LINK);
+
+    public final DateTimeParser dateTimeParser;
+    private static final int PAGES_COUNT = 5;
+
+    public HabrCareerParse(DateTimeParser dateTimeParser) {
+        this.dateTimeParser = dateTimeParser;
+    }
 
     private String retrieveDescription(String link) throws IOException {
         Connection connection = Jsoup.connect(link);
@@ -25,22 +33,41 @@ public class HabrCareerParse {
 
     public static void main(String[] args) throws IOException {
         HabrCareerDateTimeParser dateParse = new HabrCareerDateTimeParser();
-        List<String> saved = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
-            Connection connection = Jsoup.connect(String.format("%s?page=%d", PAGE_LINK, i));
-            Document document = connection.get();
-            Elements rows = document.select(".vacancy-card__inner");
-            rows.forEach(row -> {
-                Element titleElement = row.select(".vacancy-card__title").first();
-                Element linkElement = titleElement.child(0);
-                Element dateElement = row.select(".vacancy-card__date").first();
-                String vacancyName = titleElement.text();
-                String link = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
-                String date = dateElement.text();
-                System.out.printf("%s %s %s%n", vacancyName, link, date);
-            });
+        HabrCareerParse habr = new HabrCareerParse(new HabrCareerDateTimeParser());
+        List<Post> vacancies = habr.list("https://career.habr.com/vacancies/java_developer?page=");
+        System.out.println(vacancies.size());
+    }
+
+    @Override
+    public List<Post> list(String link) throws IOException {
+        List<Post> vacancies = new ArrayList<>();
+        for (int i = 1; i <= PAGES_COUNT; i++) {
+            String pageLink = String.format("%s?page=%d", SOURCE_LINK, i);
+            try {
+                Connection connection = Jsoup.connect(pageLink);
+                Document document = connection.get();
+                Elements rows = document.select(".vacancy-card__inner");
+                rows.forEach(row -> {
+                            Element titleElement = row.select(".vacancy-card__title").first();
+                            Element linkElement = titleElement.child(0);
+                            Element dateElement = row.select(".vacancy-card__date").first();
+                            String vacancyName = titleElement.text();
+                            Element date = dateElement.child(0);
+                            LocalDateTime vacancyDate = dateTimeParser.parse(date.attr("datetime"));
+                            String vacLink = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
+                            String description = null;
+                            try {
+                                description = retrieveDescription(vacLink);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                            vacancies.add(new Post(vacancyName, vacLink, description, vacancyDate));
+                        }
+                        );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        HabrCareerParse parse = new HabrCareerParse();
-        System.out.println(parse.retrieveDescription("https://career.habr.com/vacancies/1000106372"));
+        return vacancies;
     }
 }
