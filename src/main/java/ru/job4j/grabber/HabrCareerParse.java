@@ -16,6 +16,13 @@ public class HabrCareerParse {
     private static final String SOURCE_LINK = "https://career.habr.com";
     private static final String PAGE_LINK = String.format("%s/vacancies/java_developer", SOURCE_LINK);
 
+    private String retrieveDescription(String link) throws IOException {
+        Connection connection = Jsoup.connect(link);
+        Document document = connection.get();
+        Elements rows = document.select(".style-ugc");
+        return rows.text();
+    }
+
     public static void main(String[] args) throws IOException {
         HabrCareerDateTimeParser dateParse = new HabrCareerDateTimeParser();
         List<String> saved = new ArrayList<>();
@@ -33,5 +40,7 @@ public class HabrCareerParse {
                 System.out.printf("%s %s %s%n", vacancyName, link, date);
             });
         }
+        HabrCareerParse parse = new HabrCareerParse();
+        System.out.println(parse.retrieveDescription("https://career.habr.com/vacancies/1000106372"));
     }
 }
