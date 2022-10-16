@@ -17,7 +17,7 @@ import static org.quartz.SimpleScheduleBuilder.*;
 public class AlertRabbit {
     public static void main(String[] args) throws ClassNotFoundException {
         Properties properties = getProp();
-        Class.forName(getProp().getProperty("driver-class-name"));
+        Class.forName(properties.getProperty("driver-class-name"));
         try (Connection cn = DriverManager.getConnection(
                 properties.getProperty("url"),
                 properties.getProperty("username"),
@@ -32,7 +32,7 @@ public class AlertRabbit {
                         .usingJobData(data)
                         .build();
                 SimpleScheduleBuilder times = simpleSchedule()
-                        .withIntervalInSeconds(Integer.parseInt(getProp().getProperty("rabbit.interval")))
+                        .withIntervalInSeconds(Integer.parseInt(properties.getProperty("rabbit.interval")))
                         .repeatForever();
                 Trigger trigger = newTrigger()
                         .startNow()
