@@ -16,8 +16,28 @@ import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 public class Grabber implements Grab {
-    private final Properties cfg = new Properties();
     private static final String LINK = "https://career.habr.com/vacancies/java_developer?page=";
+
+    private final Properties cfg = new Properties();
+
+    public static class GrabJob implements Job {
+
+        @Override
+        public void execute(JobExecutionContext context) {
+            JobDataMap map = context.getJobDetail().getJobDataMap();
+            Store store = (Store) map.get("store");
+            Parse parse = (Parse) map.get("parse");
+            List<Post> vacancies = null;
+            try {
+                vacancies = parse.list(LINK);
+            } catch (IOException e) {
+                throw new IllegalArgumentException();
+            }
+            for (Post vac : vacancies) {
+                store.save(vac);
+            }
+        }
+    }
 
     public Store store() throws SQLException {
         return new PsqlStore(cfg);
@@ -51,25 +71,6 @@ public class Grabber implements Grab {
                 .withSchedule(times)
                 .build();
         scheduler.scheduleJob(job, trigger);
-    }
-
-    public static class GrabJob implements Job {
-
-        @Override
-        public void execute(JobExecutionContext context) {
-            JobDataMap map = context.getJobDetail().getJobDataMap();
-            Store store = (Store) map.get("store");
-            Parse parse = (Parse) map.get("parse");
-            List<Post> vacancies = null;
-            try {
-                vacancies = parse.list(LINK);
-            } catch (IOException e) {
-                throw new IllegalArgumentException();
-            }
-            for (Post vac : vacancies) {
-                store.save(vac);
-            }
-        }
     }
 
     public void web(Store store) {
