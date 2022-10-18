@@ -67,7 +67,7 @@ public class HabrCareerParse implements Parse {
     }
 
     @Override
-    public List<Post> list(String link) throws IOException {
+    public List<Post> list(String link) {
         List<Post> vacancies = new ArrayList<>();
         for (int i = 1; i <= PAGES_COUNT; i++) {
             String pageLink = String.format("%s%d", link, i);
