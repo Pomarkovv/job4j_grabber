@@ -43,7 +43,7 @@ public class HabrCareerParse implements Parse {
         String vacancyName = titleElement.text();
         Element date = dateElement.child(0);
         LocalDateTime vacancyDate = dateTimeParser.parse(date.attr("datetime"));
-        String vacLink = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
+        String vacLink = String.format("%s%s", "https://career.habr.com", linkElement.attr("href"));
         String description = null;
         try {
             description = retrieveDescription(vacLink);
