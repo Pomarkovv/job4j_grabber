@@ -7,11 +7,15 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import ru.job4j.grabber.utils.DateTimeParser;
 import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
+import ru.job4j.quartz.AlertRabbit;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class HabrCareerParse implements Parse {
 
@@ -32,37 +36,47 @@ public class HabrCareerParse implements Parse {
         return rows.text();
     }
 
-    public static void main(String[] args) throws IOException {
-        HabrCareerDateTimeParser dateParse = new HabrCareerDateTimeParser();
+    public static void main(String[] args) throws IOException, SQLException {
         HabrCareerParse habr = new HabrCareerParse(new HabrCareerDateTimeParser());
         List<Post> vacancies = habr.list("https://career.habr.com/vacancies/java_developer?page=");
         System.out.println(vacancies.size());
+        Properties properties = new Properties();
+        try (InputStream ins = AlertRabbit.class.getClassLoader().getResourceAsStream("rabbit.properties")) {
+            properties.load(ins);
+        }
+        PsqlStore psqlStore = new PsqlStore(properties);
+        psqlStore.save(vacancies.get(0));
+        System.out.println(psqlStore.getAll());
+    }
+
+    private Post getPost(Element element) {
+        Element titleElement = element.select(".vacancy-card__title").first();
+        Element linkElement = titleElement.child(0);
+        Element dateElement = element.select(".vacancy-card__date").first();
+        String vacancyName = titleElement.text();
+        Element date = dateElement.child(0);
+        LocalDateTime vacancyDate = dateTimeParser.parse(date.attr("datetime"));
+        String vacLink = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
+        String description = null;
+        try {
+            description = retrieveDescription(vacLink);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return new Post(vacancyName, vacLink, description, vacancyDate);
     }
 
     @Override
     public List<Post> list(String link) throws IOException {
         List<Post> vacancies = new ArrayList<>();
         for (int i = 1; i <= PAGES_COUNT; i++) {
-            String pageLink = String.format("%s%d", SOURCE_LINK, i);
+            String pageLink = String.format("%s%d", link, i);
             try {
                 Connection connection = Jsoup.connect(pageLink);
                 Document document = connection.get();
                 Elements rows = document.select(".vacancy-card__inner");
                for (Element row : rows) {
-                   Element titleElement = row.select(".vacancy-card__title").first();
-                   Element linkElement = titleElement.child(0);
-                   Element dateElement = row.select(".vacancy-card__date").first();
-                   String vacancyName = titleElement.text();
-                   Element date = dateElement.child(0);
-                   LocalDateTime vacancyDate = dateTimeParser.parse(date.attr("datetime"));
-                   String vacLink = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
-                   String description = null;
-                   try {
-                       description = retrieveDescription(vacLink);
-                   } catch (IOException e) {
-                       throw new RuntimeException(e);
-                   }
-                   vacancies.add(new Post(vacancyName, vacLink, description, vacancyDate));
+                   vacancies.add(getPost(row));
                }
             } catch (IOException e) {
                 e.printStackTrace();
