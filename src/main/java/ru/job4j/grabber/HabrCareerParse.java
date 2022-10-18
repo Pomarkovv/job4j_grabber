@@ -39,12 +39,12 @@ public class HabrCareerParse implements Parse {
     public static void main(String[] args) throws IOException, SQLException {
         HabrCareerParse habr = new HabrCareerParse(new HabrCareerDateTimeParser());
         List<Post> vacancies = habr.list("https://career.habr.com/vacancies/java_developer?page=");
-        System.out.println(vacancies.size());
         Properties properties = new Properties();
         try (InputStream ins = AlertRabbit.class.getClassLoader().getResourceAsStream("rabbit.properties")) {
             properties.load(ins);
         }
         PsqlStore psqlStore = new PsqlStore(properties);
+        System.out.println(vacancies.size());
         psqlStore.save(vacancies.get(0));
         System.out.println(psqlStore.getAll());
     }
