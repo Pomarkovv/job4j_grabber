@@ -36,19 +36,6 @@ public class HabrCareerParse implements Parse {
         return rows.text();
     }
 
-    public static void main(String[] args) throws IOException, SQLException {
-        HabrCareerParse habr = new HabrCareerParse(new HabrCareerDateTimeParser());
-        List<Post> vacancies = habr.list("https://career.habr.com/vacancies/java_developer?page=");
-        Properties properties = new Properties();
-        try (InputStream ins = AlertRabbit.class.getClassLoader().getResourceAsStream("rabbit.properties")) {
-            properties.load(ins);
-        }
-        PsqlStore psqlStore = new PsqlStore(properties);
-        System.out.println(vacancies.size());
-        psqlStore.save(vacancies.get(0));
-        System.out.println(psqlStore.getAll());
-    }
-
     private Post getPost(Element element) {
         Element titleElement = element.select(".vacancy-card__title").first();
         Element linkElement = titleElement.child(0);
