@@ -24,7 +24,6 @@ public class Post {
         this.link = link;
         this.description = description;
         this.created = created;
-
     }
 
     public int getId() {
